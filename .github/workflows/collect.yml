@@ -1,0 +1,42 @@
+name: collect
+
+on:
+  schedule:
+    - cron: "7 * * * *"      # player counts: every hour at :07 (UTC)
+    - cron: "37 */6 * * *"   # prices: every 6 hours at :37 (UTC)
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "Which job to run manually: players or prices"
+        required: true
+        default: "players"
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      TZ: UTC
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            any::httr2
+            any::jsonlite
+            any::DBI
+            any::RPostgres
+
+      - name: Collect player counts
+        if: github.event.schedule == '7 * * * *' || inputs.job == 'players'
+        run: Rscript R/collect_players.R
+
+      - name: Collect prices
+        if: github.event.schedule == '37 */6 * * *' || inputs.job == 'prices'
+        run: Rscript R/collect_prices.R
