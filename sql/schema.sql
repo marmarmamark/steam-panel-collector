@@ -46,3 +46,12 @@ CREATE TABLE IF NOT EXISTS runs (
 -- Release date per game (filled once by R/fetch_release_dates.R)
 ALTER TABLE games ADD COLUMN IF NOT EXISTS release_date date;
 ALTER TABLE games ADD COLUMN IF NOT EXISTS release_date_raw text;
+
+CREATE TABLE IF NOT EXISTS reviews (
+  appid          integer     NOT NULL REFERENCES games(appid),
+  ts             timestamptz NOT NULL,
+  total_positive integer,
+  total_negative integer,
+  total_reviews  integer,
+  PRIMARY KEY (appid, ts)
+);

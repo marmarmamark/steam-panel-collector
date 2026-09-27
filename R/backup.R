@@ -8,7 +8,7 @@ invisible(DBI::dbExecute(con, "SET SESSION CHARACTERISTICS AS TRANSACTION READ O
 
 dir.create("backup", showWarnings = FALSE)
 day <- format(Sys.time(), "%Y-%m-%d", tz = "UTC")
-for (tbl in c("games", "player_counts", "prices", "runs")) {
+for (tbl in c("games", "player_counts", "prices", "runs", "reviews")) {
   df <- DBI::dbReadTable(con, tbl)
   f  <- file.path("backup", sprintf("%s_%s.csv.gz", tbl, day))
   gz <- gzfile(f, "w")
