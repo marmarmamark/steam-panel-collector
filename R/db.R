@@ -10,8 +10,22 @@ suppressPackageStartupMessages({
 db_connect <- function() {
   url <- Sys.getenv("DATABASE_URL")
   if (!nzchar(url)) stop("DATABASE_URL is not set (see README).")
-  # libpq accepts a full connection URI in place of a database name
-  DBI::dbConnect(RPostgres::Postgres(), dbname = url)
+  # RPostgres does not expand a URI passed as dbname, so split it into parts
+  m <- regmatches(url, regexec(
+    "^postgres(?:ql)?://([^:@/]+)(?::([^@]*))?@([^:/?]+)(?::(\\d+))?/([^?]*)(?:\\?(.*))?$",
+    url, perl = TRUE))[[1]]
+  if (length(m) == 0) stop("DATABASE_URL is not a valid postgresql:// URI.")
+  args <- list(RPostgres::Postgres(), host = m[4],
+               port = if (nzchar(m[5])) m[5] else "5432",
+               user = URLdecode(m[2]), password = URLdecode(m[3]),
+               dbname = URLdecode(m[6]))
+  # query parameters (sslmode, channel_binding, ...) are passed on to libpq
+  for (kv in strsplit(m[7], "&", fixed = TRUE)[[1]]) {
+    p <- strsplit(kv, "=", fixed = TRUE)[[1]]
+    if (length(p) == 2) args[[p[1]]] <- URLdecode(p[2])
+  }
+  if (is.null(args$sslmode)) args$sslmode <- "require"
+  do.call(DBI::dbConnect, args)
 }
 
 # Insert rows, silently skipping rows whose primary key already exists.
