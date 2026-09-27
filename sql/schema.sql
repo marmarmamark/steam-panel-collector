@@ -42,3 +42,7 @@ CREATE TABLE IF NOT EXISTS runs (
   n_fail      integer,
   note        text
 );
+
+-- Release date per game (filled once by R/fetch_release_dates.R)
+ALTER TABLE games ADD COLUMN IF NOT EXISTS release_date date;
+ALTER TABLE games ADD COLUMN IF NOT EXISTS release_date_raw text;
